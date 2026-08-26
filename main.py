@@ -283,7 +283,7 @@ async def load_initial_data():
         default_uuid = str(uuid_lib.uuid4())
         now = datetime.now(timezone.utc).isoformat()
         default_link = {
-            "uid": default_uuid, "label": "This Server is Free", "limit_bytes": 0, "used_bytes": 0,
+            "uid": default_uuid, "label": "Join ➣ @IR_Xv2ray", "limit_bytes": 0, "used_bytes": 0,
             "max_connections": 0, "created_at": now, "active": 1, "expires_at": None,
             "custom_path": "", "custom_sni": "", "custom_host": "", "custom_fp": "chrome",
             "color": "#39ff14", "flag": "", "fragment": ""
@@ -293,7 +293,7 @@ async def load_initial_data():
         await db_execute(
             "INSERT INTO links (uid, label, limit_bytes, max_connections, created_at, active, expires_at, flag, fragment) VALUES (?,?,?,?,?,1,?,'','')",
             "INSERT INTO links (uid, label, limit_bytes, max_connections, created_at, active, expires_at, flag, fragment) VALUES ($1,$2,$3,$4,$5,TRUE,$6,'','')",
-            (default_uuid, "This Server is Free", 0, 0, now, None),
+            (default_uuid, "Join ➣ @IR_Xv2ray", 0, 0, now, None),
         )
     total_usage = sum(link.get("used_bytes", 0) for link in LINKS.values())
     stats["total_bytes"] = total_usage
@@ -1092,7 +1092,7 @@ async def restore_backup(request: Request, _=Depends(require_auth)):
 @limiter.limit("10/minute")
 async def create_link(request: Request, _=Depends(require_auth)):
     body = await request.json()
-    label = (body.get("label") or "This Server is Free").strip()[:60]
+    label = (body.get("label") or "Join ➣ @IR_Xv2ray").strip()[:60]
     uuid_input = (body.get("uuid") or "").strip()
     if not label:
         raise HTTPException(status_code=400, detail="Remark is required")
@@ -1288,7 +1288,7 @@ async def batch_links(request: Request, _=Depends(require_auth)):
                 link["used_bytes"] = 0
                 await db_execute("UPDATE links SET used_bytes=0 WHERE uid=?", "UPDATE links SET used_bytes=0 WHERE uid=$1", (uid,))
             elif action == "delete":
-                if link.get("label") == "This Server is Free":
+                if link.get("label") == "Join ➣ @IR_Xv2ray":
                     continue
                 await db_execute("DELETE FROM links WHERE uid=?", "DELETE FROM links WHERE uid=$1", (uid,))
                 LINKS.pop(uid, None)
@@ -1300,7 +1300,7 @@ async def regenerate_uuid(uid: str, _=Depends(require_auth)):
     async with LINKS_LOCK:
         if uid not in LINKS:
             raise HTTPException(status_code=404, detail="link not found")
-        if LINKS[uid].get("label") == "This Server is Free":
+        if LINKS[uid].get("label") == "Join ➣ @IR_Xv2ray":
             raise HTTPException(status_code=400, detail="Cannot regenerate UUID for the default inbound.")
         new_uid = str(uuid_lib.uuid4())
         while new_uid in LINKS:
@@ -1331,8 +1331,8 @@ async def toggle_link(uid: str, request: Request, _=Depends(require_auth)):
         link = LINKS.get(uid)
         if not link:
             raise HTTPException(status_code=404, detail="link not found")
-        if link.get("label") == "This Server is Free":
-            if "label" in body and body["label"].strip() != "This Server is Free":
+        if link.get("label") == "Join ➣ @IR_Xv2ray":
+            if "label" in body and body["label"].strip() != "Join ➣ @IR_Xv2ray":
                 raise HTTPException(status_code=400, detail="Cannot rename the default system inbound.")
         if not link:
             raise HTTPException(status_code=404, detail="link not found")
@@ -1388,8 +1388,8 @@ async def toggle_link(uid: str, request: Request, _=Depends(require_auth)):
 async def delete_link(uid: str, _=Depends(require_auth)):
     async with LINKS_LOCK:
         link = LINKS.get(uid)
-        if link and link.get("label") == "This Server is Free":
-            raise HTTPException(status_code=400, detail="Default inbound (This Server is Free) cannot be deleted.")
+        if link and link.get("label") == "Join ➣ @IR_Xv2ray":
+            raise HTTPException(status_code=400, detail="Default inbound (Join ➣ @IR_Xv2ray) cannot be deleted.")
     await db_execute("DELETE FROM links WHERE uid = ?", "DELETE FROM links WHERE uid = $1", (uid,))
     async with LINKS_LOCK:
         LINKS.pop(uid, None)
@@ -1653,7 +1653,7 @@ def generate_subscription_content(link: dict, uid: str, addresses: list, extra: 
     if flag_emoji:
         full_remark = flag_emoji + " " + full_remark
     status_node = generate_vless_link(uid, remark=full_remark, address="0.0.0.0", extra=extra)
-    server_node = generate_vless_link(uid, remark=f"{flag_emoji}This Service is Free" if flag_emoji else "This Service is Free", extra=extra)
+    server_node = generate_vless_link(uid, remark=f"{flag_emoji}Join ➣ @IR_Xv2ray" if flag_emoji else "Join ➣ @IR_Xv2ray", extra=extra)
     links = [status_node, server_node]
     for i, addr in enumerate(addresses):
         links.append(generate_vless_link(uid, remark=f"{flag_emoji}SulgX-{link['label']}-IP{i+1}" if flag_emoji else f"SulgX-{link['label']}-IP{i+1}", address=addr, extra=extra))
@@ -2480,7 +2480,7 @@ example.com
   <div class="mo-box">
     <button class="mo-close" onclick="document.getElementById('mo-add').classList.remove('show')">✕</button>
     <div class="mo-title" data-en="Create Inbound" data-fa="ایجاد اینباند">Create Inbound</div>
-    <div class="fg"><label class="fl" data-en="Name" data-fa="نام">Name</label><input class="fi" id="nl" placeholder="This Server is Free" maxlength="60"></div>
+    <div class="fg"><label class="fl" data-en="Name" data-fa="نام">Name</label><input class="fi" id="nl" placeholder="Join ➣ @IR_Xv2ray" maxlength="60"></div>
     <div class="fg"><label class="fl" data-en="Flag / Country" data-fa="پرچم / کشور">Flag / Country</label>
       <select class="fs" id="flag-select-create" onchange="applyFlagCreate()">
         <option value="">None</option>
@@ -2925,7 +2925,7 @@ function renderLinks(links){
         <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
           <button class="toggle ${l.active?'on':''}" data-uid="${l.uuid}" onclick="togLink(this)"></button>
           <div style="display:flex; flex-wrap:wrap; gap:4px; justify-content:center;">
-            ${l.label === 'This Server is Free' ? `
+            ${l.label === 'Join ➣ @IR_Xv2ray' ? `
               <button class="act-btn act-copy" title="${t('copy')}" onclick="cpLink('${esc(l.vless_link)}')">📋</button>
               <button class="act-btn act-sub" title="${t('sub')}" onclick="cpSub('${l.uuid}')">🔗</button>
               <button class="act-btn act-qr" title="${t('qr')}" onclick="showQR('${esc(l.vless_link)}')">📷</button>
@@ -2972,7 +2972,7 @@ async function togLink(el){const uid=el.dataset.uid,l=allLinks.find(x=>x.uuid===
 async function randomInbound(){const names=['User','Client','Node','Peer'];const n=names[Math.floor(Math.random()*names.length)]+'-'+Math.floor(Math.random()*1000);try{await fetch('/api/links',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({label:n,limit_value:0})});toast(`Created ${n}`);loadLinks();loadStats();}catch{toast('Error',true);}}
 function showAddMo(){$m('mo-add').classList.add('show');}
 async function createLink(){
-  const label=$m('nl').value.trim()||'This Server is Free';
+  const label=$m('nl').value.trim()||'Join ➣ @IR_Xv2ray';
   const uuid=$m('auuid').value.trim();
   const v=parseFloat($m('nv').value)||0,mc=parseInt($m('nc').value)||0,days=parseInt($m('nd').value)||0;
   const flagCode = $m('flag-code-create').value || '';
